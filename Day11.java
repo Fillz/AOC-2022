@@ -20,8 +20,8 @@ public class Day11 {
 				for(int i = 0; i < monkey.items.size(); i++) {
 					monkey.totalInspects++;
 					monkey.performOperation(i);
-					monkey.postOperationDivision(i, 3);
-					int item = monkey.items.get(i);
+					monkey.postOperationDivision(i);
+					long item = monkey.items.get(i);
 					if(item % monkey.divisibleBy == 0) {
 						monkeys.get(monkey.throwTrue).items.add(item);
 					}
@@ -29,7 +29,7 @@ public class Day11 {
 						monkeys.get(monkey.throwFalse).items.add(item);
 					}
 				}
-				monkey.items = new ArrayList<Integer>();
+				monkey.items = new ArrayList<Long>();
 			}
 		}
 
@@ -45,7 +45,39 @@ public class Day11 {
 	}
 
 	private void partTwo(ArrayList<String> input) {
-		
+		ArrayList<Monkey> monkeys = parseInput(input);
+		long GCF = 1;
+		for(Monkey m : monkeys)
+			GCF *= m.divisibleBy;
+
+		for(int round = 0; round < 10000; round++) {
+			for(Monkey monkey : monkeys) {
+				for(int i = 0; i < monkey.items.size(); i++) {
+					monkey.totalInspects++;
+					monkey.items.set(i, monkey.items.get(i) % GCF == 0 ? GCF : monkey.items.get(i) % GCF);
+					monkey.performOperation(i);
+					long item = monkey.items.get(i);
+					if(item % monkey.divisibleBy == 0) {
+						monkeys.get(monkey.throwTrue).items.add(item);
+					}
+					else {
+						monkeys.get(monkey.throwFalse).items.add(item);
+					}
+				}
+				monkey.items = new ArrayList<Long>();
+			}
+		}
+
+		Collections.sort(monkeys, new Comparator<Monkey>() {
+			public int compare(Monkey m1, Monkey m2) {
+				if(m1.totalInspects == m2.totalInspects)
+					return 0;
+				return m1.totalInspects < m2.totalInspects ? -1 : 1;
+			}
+	   	});
+		Collections.reverse(monkeys);
+		long res = monkeys.get(0).totalInspects * monkeys.get(1).totalInspects;
+		System.out.println(res);
 	}
 
 	private ArrayList<Monkey> parseInput(ArrayList<String> input) {
@@ -57,24 +89,24 @@ public class Day11 {
 			String throwTrueString = input.get(i+4).trim();
 			String throwFalseString = input.get(i+5).trim();
 
-			ArrayList<Integer> items = new ArrayList<Integer>();
+			ArrayList<Long> items = new ArrayList<Long>();
 			for(String item : itemsString.split(":")[1].split(",")) {
-				items.add(Integer.parseInt(item.trim()));
+				items.add(Long.parseLong(item.trim()));
 			}
 			Monkey.Operation operation = operationString.contains("*") ? Monkey.Operation.MUL : Monkey.Operation.ADD;
 
-			int operationValue;
+			long operationValue;
 			boolean operationOnOld;
 			if(operationString.split(" ")[5].equals("old")) {
 				operationValue = -1;
 				operationOnOld = true;
 			}
 			else {
-				operationValue = Integer.parseInt(operationString.split(" ")[5]);
+				operationValue = Long.parseLong(operationString.split(" ")[5]);
 				operationOnOld = false;
 			}
 
-			int divisibleBy = Integer.parseInt(divisibleString.split(" ")[3]);
+			long divisibleBy = Long.parseLong(divisibleString.split(" ")[3]);
 			int throwTrue = Integer.parseInt(throwTrueString.split(" ")[5]);
 			int throwFalse = Integer.parseInt(throwFalseString.split(" ")[5]);
 
@@ -85,11 +117,12 @@ public class Day11 {
 
 	private class Monkey {
 
-		public int totalInspects;
+		public long totalInspects;
 
-		public int opValue, divisibleBy, throwTrue, throwFalse;
+		public long opValue, divisibleBy;
+		public int throwTrue, throwFalse;
 		private boolean operationOnOld;
-		public ArrayList<Integer> items;
+		public ArrayList<Long> items;
 		private Operation operation;
 
 		public enum Operation {
@@ -97,7 +130,7 @@ public class Day11 {
 			ADD
 		};
 
-		public Monkey(ArrayList<Integer> items, Operation op, int opValue, boolean operationOnOld, int divisibleBy, int throwTrue, int throwFalse) {
+		public Monkey(ArrayList<Long> items, Operation op, long opValue, boolean operationOnOld, long divisibleBy, int throwTrue, int throwFalse) {
 			this.items = items;
 			this.operation = op;
 			this.opValue = opValue;
@@ -123,8 +156,8 @@ public class Day11 {
 			}
 		}
 
-		public void postOperationDivision(int index, int divBy) {
-			this.items.set(index, this.items.get(index) / divBy);
+		public void postOperationDivision(int index) {
+			this.items.set(index, this.items.get(index) / 3);
 		}
 
 	}
