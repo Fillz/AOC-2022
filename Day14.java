@@ -93,17 +93,6 @@ public class Day14 {
 			}
 		}
 		System.out.println(counter);
-		for(int y = 0; y < 200; y++) {
-			for(int x = 0; x < 600; x++) {
-				if(map[x][y] == 0)
-					System.out.print(".");
-				else if(map[x][y] == 1)
-					System.out.print("#");
-				else if(map[x][y] == 2)
-					System.out.print("o");
-			}
-			System.out.println();
-		}
 	}
 
 	private void moveSand(int x1, int y1, int x2, int y2) {
