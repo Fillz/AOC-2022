@@ -33,17 +33,31 @@ public class Day16 {
 	}
 
 	private void partTwo(ArrayList<String> input) {
-		this.maxPressure = 0;
-		calculateMaximumPressurePart2("AA", 26, "AA", 26, 0, this.relevantRooms);
-		System.out.println(maxPressure);
+		maxPressure = 0;
+		paths = new ArrayList<Path>();
+		calculateMaximumPressure("AA", 26, 0, this.relevantRooms);
+
+		ArrayList<Path> newPaths = new ArrayList<Path>(paths);
+
+		int mostPressureReleased = 0;
+		for(Path p : newPaths) {
+			this.maxPressure = 0;
+			paths = new ArrayList<Path>();
+			calculateMaximumPressure("AA", 26, 0, p.unvisitedRooms);
+			if(p.totalPressureReleased + this.maxPressure > mostPressureReleased)
+				mostPressureReleased = p.totalPressureReleased + this.maxPressure;
+		}
+		System.out.println(mostPressureReleased);
 	}
 
 	private int maxPressure = 0;
+	private ArrayList<Path> paths = new ArrayList<Path>();
 
 	private void calculateMaximumPressure(String currentRoom, int minutesLeft, int currentTotalPressureRelease, ArrayList<String> relevantRoomsLeft) {
 		if(relevantRoomsLeft.size() == 0) {
 			if(currentTotalPressureRelease > this.maxPressure)
 				this.maxPressure = currentTotalPressureRelease;
+			this.paths.add(new Path(currentTotalPressureRelease, relevantRoomsLeft));
 			return;
 		}
 		for(String relevantRoom : relevantRoomsLeft) {
@@ -51,48 +65,13 @@ public class Day16 {
 			if(dist >= minutesLeft - 1) {
 				if(currentTotalPressureRelease > this.maxPressure)
 					this.maxPressure = currentTotalPressureRelease;
+				this.paths.add(new Path(currentTotalPressureRelease, relevantRoomsLeft));
 				continue;
 			}
 			ArrayList<String> newRelevantRoomsLeft = new ArrayList<String>(relevantRoomsLeft);
 			newRelevantRoomsLeft.remove(relevantRoom);
+			this.paths.add(new Path(currentTotalPressureRelease + ((minutesLeft - dist - 1) * this.map.get(relevantRoom).flowRate), newRelevantRoomsLeft));
 			calculateMaximumPressure(relevantRoom, minutesLeft - dist - 1, currentTotalPressureRelease + ((minutesLeft - dist - 1) * this.map.get(relevantRoom).flowRate), newRelevantRoomsLeft);
-		}
-	}
-
-	private void calculateMaximumPressurePart2(String currentRoomYou, int minutesLeftYou, String currentRoomElephant, int minutesLeftElephant, int currentTotalPressureRelease, ArrayList<String> relevantRoomsLeft) {
-		if(relevantRoomsLeft.size() == 0) {
-			if(currentTotalPressureRelease > this.maxPressure)
-				this.maxPressure = currentTotalPressureRelease;
-			return;
-		}
-		for(String relevantRoomYou : relevantRoomsLeft) {
-			for(String relevantRoomElephant : relevantRoomsLeft) {
-				if(relevantRoomYou.equals(relevantRoomElephant))
-					continue;
-				int distYou = distancesToRelevantRooms.get(currentRoomYou + relevantRoomYou);
-				int distElephant = distancesToRelevantRooms.get(currentRoomElephant + relevantRoomElephant);
-				if(distYou >= minutesLeftYou - 1 && distElephant >= minutesLeftElephant - 1) {
-					if(currentTotalPressureRelease > this.maxPressure)
-						this.maxPressure = currentTotalPressureRelease;
-					continue;
-				}
-				else if(distYou < minutesLeftYou - 1 && distElephant >= minutesLeftElephant - 1) {
-					ArrayList<String> newRelevantRoomsLeft = new ArrayList<String>(relevantRoomsLeft);
-					newRelevantRoomsLeft.remove(relevantRoomYou);
-					calculateMaximumPressurePart2(relevantRoomYou, minutesLeftYou - distYou - 1, currentRoomElephant, minutesLeftElephant, currentTotalPressureRelease + ((minutesLeftYou - distYou - 1) * this.map.get(relevantRoomYou).flowRate), newRelevantRoomsLeft);
-				}
-				else if(distYou >= minutesLeftYou - 1 && distElephant < minutesLeftElephant - 1) {
-					ArrayList<String> newRelevantRoomsLeft = new ArrayList<String>(relevantRoomsLeft);
-					newRelevantRoomsLeft.remove(relevantRoomElephant);
-					calculateMaximumPressurePart2(currentRoomYou, minutesLeftYou, relevantRoomElephant, minutesLeftElephant - distElephant - 1, currentTotalPressureRelease + ((minutesLeftElephant - distElephant - 1) * this.map.get(relevantRoomElephant).flowRate), newRelevantRoomsLeft);
-				}
-				else {
-					ArrayList<String> newRelevantRoomsLeft = new ArrayList<String>(relevantRoomsLeft);
-					newRelevantRoomsLeft.remove(relevantRoomYou);
-					newRelevantRoomsLeft.remove(relevantRoomElephant);
-					calculateMaximumPressurePart2(relevantRoomYou, minutesLeftYou - distYou - 1, relevantRoomElephant, minutesLeftElephant - distElephant - 1, currentTotalPressureRelease + ((minutesLeftYou - distYou - 1) * this.map.get(relevantRoomYou).flowRate) + ((minutesLeftElephant - distElephant - 1) * this.map.get(relevantRoomElephant).flowRate), newRelevantRoomsLeft);
-				}
-			}
 		}
 	}
 
@@ -142,6 +121,15 @@ public class Day16 {
 		public Pair(String name, int distance) {
 			this.name = name;
 			this.distance = distance;
+		}
+	}
+
+	private class Path {
+		public ArrayList<String> unvisitedRooms;
+		public int totalPressureReleased;
+		public Path(int totalPressureReleased, ArrayList<String> path) {
+			this.totalPressureReleased = totalPressureReleased;
+			unvisitedRooms = path;
 		}
 	}
 }
