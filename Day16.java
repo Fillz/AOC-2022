@@ -28,51 +28,57 @@ public class Day16 {
 	private ArrayList<String> relevantRooms = new ArrayList<String>();
 
 	private void partOne(ArrayList<String> input) {
-		calculateMaximumPressure("AA", 30, 0, this.relevantRooms);
-		System.out.println(maxPressure);
+		int pressure = calculateMaximumPressure("AA", 30, 0, this.relevantRooms);
+		System.out.println(pressure);
 	}
 
 	private void partTwo(ArrayList<String> input) {
-		maxPressure = 0;
-		paths = new ArrayList<Path>();
+		this.calculatingPaths = true;
 		calculateMaximumPressure("AA", 26, 0, this.relevantRooms);
+		this.calculatingPaths = false;
 
 		ArrayList<Path> newPaths = new ArrayList<Path>(paths);
 
-		int mostPressureReleased = 0;
-		for(Path p : newPaths) {
-			this.maxPressure = 0;
+		IntegerObject mostPressureReleased = new IntegerObject(0);
+		newPaths.parallelStream().forEach(p -> {
 			paths = new ArrayList<Path>();
-			calculateMaximumPressure("AA", 26, 0, p.unvisitedRooms);
-			if(p.totalPressureReleased + this.maxPressure > mostPressureReleased)
-				mostPressureReleased = p.totalPressureReleased + this.maxPressure;
-		}
-		System.out.println(mostPressureReleased);
+			int pressure = calculateMaximumPressure("AA", 26, 0, p.unvisitedRooms);
+			synchronized(mostPressureReleased) {
+				if(p.totalPressureReleased + pressure > mostPressureReleased.value)
+					mostPressureReleased.value = p.totalPressureReleased + pressure;
+			}
+		});
+		System.out.println(mostPressureReleased.value);
 	}
 
-	private int maxPressure = 0;
 	private ArrayList<Path> paths = new ArrayList<Path>();
+	private boolean calculatingPaths = false;
 
-	private void calculateMaximumPressure(String currentRoom, int minutesLeft, int currentTotalPressureRelease, ArrayList<String> relevantRoomsLeft) {
+	private int calculateMaximumPressure(String currentRoom, int minutesLeft, int currentTotalPressureRelease, ArrayList<String> relevantRoomsLeft) {
 		if(relevantRoomsLeft.size() == 0) {
-			if(currentTotalPressureRelease > this.maxPressure)
-				this.maxPressure = currentTotalPressureRelease;
-			this.paths.add(new Path(currentTotalPressureRelease, relevantRoomsLeft));
-			return;
+			if(this.calculatingPaths)
+				this.paths.add(new Path(currentTotalPressureRelease, relevantRoomsLeft));
+			return currentTotalPressureRelease;
 		}
+		int maxPress = 0;
 		for(String relevantRoom : relevantRoomsLeft) {
 			int dist = distancesToRelevantRooms.get(currentRoom + relevantRoom);
 			if(dist >= minutesLeft - 1) {
-				if(currentTotalPressureRelease > this.maxPressure)
-					this.maxPressure = currentTotalPressureRelease;
-				this.paths.add(new Path(currentTotalPressureRelease, relevantRoomsLeft));
+				if(currentTotalPressureRelease > maxPress)
+					maxPress = currentTotalPressureRelease;
+				if(this.calculatingPaths)
+					this.paths.add(new Path(currentTotalPressureRelease, relevantRoomsLeft));
 				continue;
 			}
 			ArrayList<String> newRelevantRoomsLeft = new ArrayList<String>(relevantRoomsLeft);
 			newRelevantRoomsLeft.remove(relevantRoom);
-			this.paths.add(new Path(currentTotalPressureRelease + ((minutesLeft - dist - 1) * this.map.get(relevantRoom).flowRate), newRelevantRoomsLeft));
-			calculateMaximumPressure(relevantRoom, minutesLeft - dist - 1, currentTotalPressureRelease + ((minutesLeft - dist - 1) * this.map.get(relevantRoom).flowRate), newRelevantRoomsLeft);
+			if(this.calculatingPaths)
+				this.paths.add(new Path(currentTotalPressureRelease + ((minutesLeft - dist - 1) * this.map.get(relevantRoom).flowRate), newRelevantRoomsLeft));
+			int pressure = calculateMaximumPressure(relevantRoom, minutesLeft - dist - 1, currentTotalPressureRelease + ((minutesLeft - dist - 1) * this.map.get(relevantRoom).flowRate), newRelevantRoomsLeft);
+			if(pressure > maxPress)
+				maxPress = pressure;
 		}
+		return maxPress;
 	}
 
 	private int calculateShortestDistance(String from, String to) {
@@ -130,6 +136,13 @@ public class Day16 {
 		public Path(int totalPressureReleased, ArrayList<String> path) {
 			this.totalPressureReleased = totalPressureReleased;
 			unvisitedRooms = path;
+		}
+	}
+
+	private class IntegerObject {
+		int value;
+		public IntegerObject(int i) {
+			this.value = i;
 		}
 	}
 }
