@@ -126,8 +126,13 @@ public class Day17 {
 			firstCall = false;
 			return;
 		}
-		int highest = -1;
-		for(int y = 0; y < this.map[0].length; y++) {
+
+		if(this.currentHighestPoint < 0)
+			this.currentHighestPoint = 0;
+		
+		int highest = this.currentHighestPoint;
+
+		for(int y = this.currentHighestPoint + 1; y < this.map[0].length; y++) {
 			boolean hasRockPart = false;
 			for(int x = 0; x < this.map.length; x++) {
 				if(map[x][y] == 1)
