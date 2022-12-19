@@ -40,7 +40,78 @@ public class Day17 {
 	}
 
 	private void partTwo(ArrayList<String> input) {
-		
+		init(input);
+		int indexFirstLoop = -1;
+		int firstLoopHighestPoint = -1;
+		int indexSecondLoop = -1;
+		int secondLoopHighestPoint = -1;
+		boolean findingFirst = true;
+		boolean doneSearching = false;
+		ArrayList<Coord> lastCoords = new ArrayList<Coord>();
+		for(int i = 0; i < 10000; i++) {
+			ArrayList<Coord> coords = spawnNextShape();
+			while(true) {
+				if(this.currentInstruction == this.instructions.length() - 1) {
+					if(findingFirst) {
+						indexFirstLoop = i;
+						calculateHighestPoint();
+						firstLoopHighestPoint = this.currentHighestPoint;
+						findingFirst = false;
+					}
+					else {
+						indexSecondLoop = i;
+						doneSearching = true;
+						calculateHighestPoint();
+						secondLoopHighestPoint = this.currentHighestPoint;
+						lastCoords = coords;
+						break;
+					}
+				}
+				if(getNextInstruction() == '<')
+					moveLeft(coords);
+				else
+					moveRight(coords);
+
+				if(rockHasStopped(coords)) {
+					for(Coord c : coords)
+						map[c.x][c.y] = 1;
+					break;
+				}
+				moveDown(coords);
+			}
+			if(doneSearching)
+				break;
+		}
+
+		int indexDiff = indexSecondLoop - indexFirstLoop;
+		long heightDiff = secondLoopHighestPoint - firstLoopHighestPoint;
+
+		long totalIterations = 1000000000000L;
+		long totalLoops = (totalIterations - indexFirstLoop) / indexDiff;
+		long remainderLastLoop = (totalIterations - indexFirstLoop) % indexDiff;
+
+		long startHeight = secondLoopHighestPoint;
+		ArrayList<Coord> coords = lastCoords;
+		for(int i = 0; i <= remainderLastLoop; i++) {
+			while(true) {
+				if(getNextInstruction() == '<')
+					moveLeft(coords);
+				else
+					moveRight(coords);
+
+				if(rockHasStopped(coords)) {
+					for(Coord c : coords)
+						map[c.x][c.y] = 1;
+					break;
+				}
+				moveDown(coords);
+			}
+			coords = spawnNextShape();
+		}
+		calculateHighestPoint();
+		long lastHeightDiff = this.currentHighestPoint - startHeight;
+		long answer = firstLoopHighestPoint + (totalLoops * heightDiff) + lastHeightDiff;
+		System.out.println(answer);
 	}
 
 	private void moveLeft(ArrayList<Coord> coords) {
