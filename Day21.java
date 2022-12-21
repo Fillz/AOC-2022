@@ -15,6 +15,7 @@ public class Day21 {
 	private void partOne(ArrayList<String> input) {
 		HashMap<String, Yell> monkeyYells = parseInput(input);
 		System.out.println(calculateNumber("root", monkeyYells));
+		System.out.println();
 	}
 
 	private void partTwo(ArrayList<String> input) {
@@ -31,6 +32,14 @@ public class Day21 {
 			YellOperation yo = (YellOperation) y;
 			long leftNumber = calculateNumber(yo.left, monkeyYells);
 			long rightNumber = calculateNumber(yo.right, monkeyYells);
+			Yell left = monkeyYells.get(yo.left);
+			Yell right = monkeyYells.get(yo.right);
+
+			if((left instanceof YellNumber && ((YellNumber) left).isHuman) || (left instanceof YellOperation) && ((YellOperation) left).containsHuman)
+				yo.containsHuman = true;
+			else if((right instanceof YellNumber && ((YellNumber) right).isHuman) || (right instanceof YellOperation) && ((YellOperation) right).containsHuman) 
+				yo.containsHuman = true;
+
 			if(yo.operation == '+')
 				return leftNumber + rightNumber;
 			else if(yo.operation == '-')
@@ -54,7 +63,11 @@ public class Day21 {
 				map.put(name, new YellOperation(operation, left, right));
 			}
 			else {
-				map.put(name, new YellNumber(Integer.parseInt(s)));
+				YellNumber yn = new YellNumber(Integer.parseInt(s));
+				if(name.equals("humn"))
+					yn.isHuman = true;
+
+				map.put(name, yn);
 			}
 		}
 		return map;
@@ -63,15 +76,19 @@ public class Day21 {
 	private interface Yell {}
 
 	private class YellNumber implements Yell {
+		public boolean isHuman;
 		public long number;
 		public YellNumber(long number) {
 			this.number = number;
+			this.isHuman = false;
 		}
 	}
 
 	private class YellOperation implements Yell {
-		private char operation;
-		private String left, right;
+		public boolean containsHuman;
+		public String humanSide;
+		public char operation;
+		public String left, right;
 		public YellOperation(char operation, String left, String right) {
 			this.operation = operation;
 			this.left = left;
