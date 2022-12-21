@@ -13,67 +13,7 @@ public class Day20 {
 
 	private void partOne(ArrayList<String> input) {
 		ArrayList<Number> numbers = parseInput(input);
-		for(int i = 0; i < numbers.size(); i++) {
-			int currentIndex = getIndexOfNumberWithStartIndex(numbers, i);
-			Number currentNumber = numbers.get(currentIndex);
-			if(currentNumber.number == 0)
-				continue;
-
-			
-			if(currentNumber.number > 0) {
-				int targetIndex = (currentIndex + currentNumber.number) % numbers.size();
-				if(currentIndex + currentNumber.number >= numbers.size())
-					targetIndex++;
-
-				if(targetIndex == currentIndex)
-					continue;
-				if(targetIndex > currentIndex) {
-					moveLeft(numbers, currentIndex, targetIndex);
-					numbers.set(targetIndex, currentNumber);
-				}
-				else {
-					moveRight(numbers, targetIndex, currentIndex);
-					numbers.set(targetIndex, currentNumber);
-				}
-				/*if(currentIndex + (currentNumber.number % numbers.size()) > numbers.size() - 1) {
-					int targetIndex = (currentIndex + currentNumber.number) % numbers.size() + 1;
-					moveRight(numbers, targetIndex, currentIndex);
-					numbers.set(targetIndex, currentNumber);
-				}
-				else {
-					int targetIndex = currentIndex + currentNumber.number;
-					moveLeft(numbers, currentIndex, targetIndex);
-					numbers.set(targetIndex, currentNumber);
-				}*/
-			}
-			else {
-				int targetIndex = (currentIndex + currentNumber.number) % numbers.size();
-				if(currentIndex + currentNumber.number <= 0)
-					targetIndex--;
-				targetIndex = targetIndex < 0 ? targetIndex + numbers.size() : targetIndex;
-				if(targetIndex == currentIndex)
-					continue;
-				if(targetIndex > currentIndex) {
-					moveLeft(numbers, currentIndex, targetIndex);
-					numbers.set(targetIndex, currentNumber);
-				}
-				else {
-					moveRight(numbers, targetIndex, currentIndex);
-					numbers.set(targetIndex, currentNumber);
-				}
-				/*if(currentIndex + (currentNumber.number % numbers.size()) <= 0) {
-					int mod = ((currentIndex + currentNumber.number) % numbers.size()) - 1;
-					int targetIndex = mod < 0 ? mod + numbers.size() : mod;
-					moveLeft(numbers, currentIndex, targetIndex);
-					numbers.set(targetIndex, currentNumber);
-				}
-				else {
-					int targetIndex = currentIndex + currentNumber.number;
-					moveRight(numbers, targetIndex, currentIndex);
-					numbers.set(targetIndex, currentNumber);
-				}*/
-			}
-		}
+		runMixing(numbers, 1);
 		int zeroIndex = -1;
 		for(int i = 0; i < numbers.size(); i++) {
 			if(numbers.get(i).number == 0)
@@ -86,7 +26,61 @@ public class Day20 {
 	}
 
 	private void partTwo(ArrayList<String> input) {
+		long decryptionKey = 811589153;
+		ArrayList<Number> numbers = parseInput(input);
+		for(Number n : numbers) {
+			n.number *= decryptionKey;
+		}
+		runMixing(numbers, 10);
+		int zeroIndex = -1;
+		for(int i = 0; i < numbers.size(); i++) {
+			if(numbers.get(i).number == 0)
+				zeroIndex = i;
+		}
+		int index1 = (zeroIndex + 1000) % numbers.size();
+		int index2 = (zeroIndex + 2000) % numbers.size();
+		int index3 = (zeroIndex + 3000) % numbers.size();
+		System.out.println(numbers.get(index1).number + numbers.get(index2).number + numbers.get(index3).number);
+	}
 
+	private void runMixing(ArrayList<Number> numbers, int mixAmount) {
+		for(int i = 0; i < numbers.size() * mixAmount; i++) {
+			int currentIndex = getIndexOfNumberWithStartIndex(numbers, i % numbers.size());
+			Number currentNumber = numbers.get(currentIndex);
+			if(currentNumber.number == 0)
+				continue;
+			
+			if(currentNumber.number > 0) {
+				int targetIndex = (int) ((((long) currentIndex) + currentNumber.number) % (numbers.size() - 1));
+
+				if(targetIndex == currentIndex)
+					continue;
+				if(targetIndex > currentIndex) {
+					moveLeft(numbers, currentIndex, targetIndex);
+					numbers.set(targetIndex, currentNumber);
+				}
+				else {
+					moveRight(numbers, targetIndex, currentIndex);
+					numbers.set(targetIndex, currentNumber);
+				}
+			}
+			else {
+				int targetIndex = (int) ((((long) currentIndex) + currentNumber.number) % (numbers.size() - 1));
+				if(targetIndex < 0)
+					targetIndex += (numbers.size() - 1);
+
+				if(targetIndex == currentIndex)
+					continue;
+				if(targetIndex > currentIndex) {
+					moveLeft(numbers, currentIndex, targetIndex);
+					numbers.set(targetIndex, currentNumber);
+				}
+				else {
+					moveRight(numbers, targetIndex, currentIndex);
+					numbers.set(targetIndex, currentNumber);
+				}
+			}
+		}
 	}
 
 	private void moveRight(ArrayList<Number> numbers, int left, int right) {
@@ -116,11 +110,10 @@ public class Day20 {
 
 	private class Number {
 		public int startIndex;
-		public int number;
+		public long number;
 		public Number(int startIndex, int number) {
 			this.startIndex = startIndex;
 			this.number = number;
 		}
 	}
-
 }
