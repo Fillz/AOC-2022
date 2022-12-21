@@ -19,7 +19,9 @@ public class Day21 {
 	}
 
 	private void partTwo(ArrayList<String> input) {
-
+		HashMap<String, Yell> monkeyYells = parseInput(input);
+		System.out.println(calculateNumber("root", monkeyYells));
+		System.out.println();
 	}
 
 	private long calculateNumber(String currentMonkey, HashMap<String, Yell> monkeyYells) {
@@ -35,10 +37,14 @@ public class Day21 {
 			Yell left = monkeyYells.get(yo.left);
 			Yell right = monkeyYells.get(yo.right);
 
-			if((left instanceof YellNumber && ((YellNumber) left).isHuman) || (left instanceof YellOperation) && ((YellOperation) left).containsHuman)
+			if((left instanceof YellNumber && ((YellNumber) left).isHuman) || (left instanceof YellOperation) && ((YellOperation) left).containsHuman) {
 				yo.containsHuman = true;
-			else if((right instanceof YellNumber && ((YellNumber) right).isHuman) || (right instanceof YellOperation) && ((YellOperation) right).containsHuman) 
+				yo.humanSide = "left";
+			}
+			else if((right instanceof YellNumber && ((YellNumber) right).isHuman) || (right instanceof YellOperation) && ((YellOperation) right).containsHuman) {
 				yo.containsHuman = true;
+				yo.humanSide = "right";
+			}
 
 			if(yo.operation == '+')
 				return leftNumber + rightNumber;
