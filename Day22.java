@@ -54,8 +54,162 @@ public class Day22 {
 		System.out.println(1000 * current.y + 4 * current.x + facing);
 	}
 
+	int topX = 51;
+	int topY = 51;
+	int upX = 51;
+	int upY = 1;
+	int downX = 51;
+	int downY = 101;
+	int rightX = 101;
+	int rightY = 1;
+	int leftX = 1;
+	int leftY = 101;
+	int botX = 1;
+	int botY = 151;
+
 	private void partTwo(ArrayList<String> input) {
-		
+		// OBS! Only works for my specific input.
+		Tile[][] map = parseMap(input);
+		fixWraparoundsPart2(map);
+		ArrayList<Instruction> instructions = parseInstructions(input.get(input.size() - 1));
+
+		int facing = 0; // 0 = right, 1 = down, 2 = left, 3 = up
+		Tile current = findFirstTileInRow(map, 1);
+		for(Instruction instruction : instructions) {
+			if(instruction instanceof TurnInstruction)
+				facing = changeFacing(facing, ((TurnInstruction) instruction).turn);
+			else if(instruction instanceof MoveInstruction) {
+				MoveInstruction moveInstruction = (MoveInstruction) instruction;
+				for(int i = 0; i < moveInstruction.distance; i++) {
+					if(facing == 0) {
+						if(current.right != null && !(current.right instanceof WallTile)) {
+							facing = updateFacingIfChangedCubeSide(facing, current.x, current.y);
+							current = current.right;
+						}
+						else
+							break;
+					}
+					else if(facing == 1) {
+						if(current.down != null && !(current.down instanceof WallTile)) {
+							facing = updateFacingIfChangedCubeSide(facing, current.x, current.y);
+							current = current.down;
+						}
+						else
+							break;
+					}
+					else if(facing == 2) {
+						if(current.left != null && !(current.left instanceof WallTile)) {
+							facing = updateFacingIfChangedCubeSide(facing, current.x, current.y);
+							current = current.left;
+						}
+						else
+							break;
+					}
+					else {
+						if(current.up != null && !(current.up instanceof WallTile)) {
+							facing = updateFacingIfChangedCubeSide(facing, current.x, current.y);
+							current = current.up;
+						}
+						else
+							break;
+					}
+				} 
+			}
+		}
+		System.out.println(1000 * current.y + 4 * current.x + facing);
+	}
+
+	private int updateFacingIfChangedCubeSide(int facing, int x, int y) {
+		// up, left side
+		if(x == upX && y >= upY && y <= upY + 49 && facing == 2)
+			return 0;
+		// up, up side
+		else if(x >= upX && x <= upX + 49 && y == upY && facing == 3)
+			return 0;
+		// right, up side
+		//else if(x >= rightX && x <= rightX + 49 && y == rightY && facing == 3)
+		//	return 3;
+		// right, right side
+		else if(x == rightX + 49 && y >= rightY && y <= rightY + 49 && facing == 0)
+			return 2;
+		// right, down side
+		else if(x >= rightX && x <= rightX + 49 && y == rightY + 49 && facing == 1)
+			return 2;
+		// top, left side
+		else if(x == topX && y >= topY && y <= topY + 49 && facing == 2)
+			return 1;
+		// top, right side
+		else if(x == topX + 49 && y >= topY && y <= topY + 49 && facing == 0)
+			return 3;
+		// down, right side 
+		else if(x == downX + 49 && 	y >= downY && y <= downY + 49 && facing == 0)
+			return 2;
+		// down, down side
+		else if(x >= downX && x <= downX + 49 && y == downY + 49 && facing == 1)
+			return 2;
+		// left, up side
+		else if(x >= leftX && x <= leftX + 49 && y == leftY && facing == 3)
+			return 0;
+		// left, left side
+		else if(x == leftX && y >= leftY && y <= leftY + 49 && facing == 2)
+			return 0;
+		// bot, left side
+		else if(x == botX && y >= botY && y <= botY + 49 && facing == 2)
+			return 1;
+		//bot, bot side
+		//else if(x >= botX && x <= botX + 49 && y == botY + 49 && facing == 1)
+		//	return 1;
+		//bot, right side
+		else if(x == botX + 49 && y >= botY && y <= botY + 49 && facing == 0)
+			return 3;
+
+		return facing;
+	}
+
+	private void fixWraparoundsPart2(Tile[][] map) {
+		for(int i = 0; i < 50; i++) {
+			// wrap up and bot
+			Tile upUpTile = map[upX + i][upY];
+			Tile botLeftTile = map[botX][botY + i];
+			upUpTile.up = botLeftTile;
+			botLeftTile.left = upUpTile;
+
+			// wrap up and left
+			Tile upLeftTile = map[upX][upY + i];
+			Tile leftLeftTile = map[leftX][leftY + 49 - i];
+			upLeftTile.left = leftLeftTile;
+			leftLeftTile.left = upLeftTile;
+
+			// wrap right and bot
+			Tile rightUpTile = map[rightX + i][rightY];
+			Tile botDownTile = map[botX + i][botY + 49];
+			rightUpTile.up = botDownTile;
+			botDownTile.down = rightUpTile;
+
+			// wrap right and down
+			Tile rightRightTile = map[rightX + 49][rightY + i];
+			Tile downRightTile = map[downX + 49][downY + 49 - i];
+			rightRightTile.right = downRightTile;
+			downRightTile.right = rightRightTile;
+
+			// wrap right and top
+			Tile rightDownTile = map[rightX + i][rightY + 49];
+			Tile topRightTile = map[topX + 49][topY + i];
+			rightDownTile.down = topRightTile;
+			topRightTile.right = rightDownTile;
+
+			// wrap top and left
+			Tile topLeftTile = map[topX][topY + i];
+			Tile leftTopTile = map[leftX + i][leftY];
+			topLeftTile.left = leftTopTile;
+			leftTopTile.up = topLeftTile;
+
+			//wrap down and bot
+			Tile downDownTile = map[downX + i][downY + 49];
+			Tile botRightTile = map[botX + 49][botY + i];
+			downDownTile.down = botRightTile;
+			botRightTile.right = downDownTile;
+		}
 	}
 
 	private Tile findFirstTileInRow(Tile[][] map, int row) {
