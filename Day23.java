@@ -75,45 +75,52 @@ public class Day23 {
 	private boolean calculateRound(Map map, LinkedList<Integer> directions) {
 		ArrayList<Elf> elves = map.getAllElves();
 		ArrayList<MoveInstruction> moveInstructions = new ArrayList<MoveInstruction>();
+		HashMap<String, Boolean> existingMoveInstructions = new HashMap<String, Boolean>();
 		for(Elf elf : elves) {
 			if(map.getElf(elf.x - 1, elf.y - 1) == null && map.getElf(elf.x, elf.y - 1) == null && map.getElf(elf.x + 1, elf.y - 1) == null &&
 			   map.getElf(elf.x - 1, elf.y) == null && map.getElf(elf.x + 1, elf.y) == null &&
 			   map.getElf(elf.x - 1, elf.y + 1) == null && map.getElf(elf.x, elf.y + 1) == null && map.getElf(elf.x + 1, elf.y + 1) == null)
 				continue;
 			for(int direction : directions) {
+				boolean addMoveInstruction = false;
+				int newX = -1;
+				int newY = -1;
 				if(direction == 0) {
 					if(map.getElf(elf.x - 1, elf.y - 1) == null && map.getElf(elf.x, elf.y - 1) == null && map.getElf(elf.x + 1, elf.y - 1) == null) {
-						moveInstructions.add(new MoveInstruction(elf.x, elf.y, elf.x, elf.y - 1));
-						break;
+						addMoveInstruction = true;
+						newX = elf.x;
+						newY = elf.y - 1;
 					}
 				}
 				else if(direction == 1) {
 					if(map.getElf(elf.x - 1, elf.y + 1) == null && map.getElf(elf.x, elf.y + 1) == null && map.getElf(elf.x + 1, elf.y + 1) == null) {
-						moveInstructions.add(new MoveInstruction(elf.x, elf.y, elf.x, elf.y + 1));
-						break;
+						addMoveInstruction = true;
+						newX = elf.x;
+						newY = elf.y + 1;
 					}
 				}
 				else if(direction == 2) {
 					if(map.getElf(elf.x - 1, elf.y - 1) == null && map.getElf(elf.x - 1, elf.y) == null && map.getElf(elf.x - 1, elf.y + 1) == null) {
-						moveInstructions.add(new MoveInstruction(elf.x, elf.y, elf.x - 1, elf.y));
-						break;
+						addMoveInstruction = true;
+						newX = elf.x - 1;
+						newY = elf.y;
 					}
 				}
 				else {
 					if(map.getElf(elf.x + 1, elf.y - 1) == null && map.getElf(elf.x + 1, elf.y) == null && map.getElf(elf.x + 1, elf.y + 1) == null) {
-						moveInstructions.add(new MoveInstruction(elf.x, elf.y, elf.x + 1, elf.y));
-						break;
+						addMoveInstruction = true;
+						newX = elf.x + 1;
+						newY = elf.y;
 					}
 				}
-			}
-		}
-
-		boolean updatedList = true;
-		while(updatedList) {
-			updatedList = false;
-			for(MoveInstruction mi : moveInstructions) {
-				if(removeIfMoreHaveSameDestination(moveInstructions, mi)) {
-					updatedList = true;
+				if(addMoveInstruction) {
+					if(existingMoveInstructions.get("" + newX + "," + newY) != null) {
+						removeMoveInstruction(moveInstructions, newX, newY);
+					}
+					else {
+						moveInstructions.add(new MoveInstruction(elf.x, elf.y, newX, newY));
+						existingMoveInstructions.put("" + newX + "," + newY, true);
+					}
 					break;
 				}
 			}
@@ -124,20 +131,13 @@ public class Day23 {
 		return moveInstructions.size() > 0;
 	}
 
-	private boolean removeIfMoreHaveSameDestination(ArrayList<MoveInstruction> moveInstructions, MoveInstruction mi) {
-		boolean res = false;
-		ArrayList<MoveInstruction> toBeRemoved = new ArrayList<MoveInstruction>();
-		for(MoveInstruction tmp : moveInstructions) {
-			if(tmp.newX == mi.newX && tmp.newY == mi.newY && !tmp.equals(mi)) {
-				toBeRemoved.add(tmp);
+	private void removeMoveInstruction(ArrayList<MoveInstruction> moveInstructions, int x, int y) {
+		for(int i = 0; i < moveInstructions.size(); i++) {
+			if(moveInstructions.get(i).newX == x && moveInstructions.get(i).newY == y) {
+				moveInstructions.remove(i);
+				return;
 			}
 		}
-		if(toBeRemoved.size() > 0) {
-			toBeRemoved.add(mi);
-			res = true;
-		}
-		moveInstructions.removeAll(toBeRemoved);
-		return res;
 	}
 
 	private Map parseInput(ArrayList<String> input) {
